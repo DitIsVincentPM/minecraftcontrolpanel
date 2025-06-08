@@ -96,7 +96,7 @@ export const AuthPage: React.FC = () => {
             {showApiKeyLogin ? (
               /* API Key Login Form */
               <div>
-                <label htmlFor="apiKey" className="block text-sm font-medium text-gray-700">
+                <label htmlFor="apiKey\" className="block text-sm font-medium text-gray-700">
                   Client API Key
                 </label>
                 <div className="mt-1 relative">
@@ -123,7 +123,7 @@ export const AuthPage: React.FC = () => {
               <>
                 {!isLogin && (
                   <div>
-                    <label htmlFor="name" className="block text-sm font-medium text-gray-700">
+                    <label htmlFor="name\" className="block text-sm font-medium text-gray-700">
                       Full Name
                     </label>
                     <input
@@ -278,7 +278,7 @@ export const AuthPage: React.FC = () => {
               <div className="mt-3 p-3 bg-yellow-50 border border-yellow-200 rounded-md">
                 <p className="text-sm text-yellow-800">
                   <strong>Important:</strong> Make sure to create a <strong>Client API Key</strong>, not an Application API Key. 
-                  Client keys start with "ptlc_" and are found in your Account settings, not the Admin panel.
+                  Client keys start with "ptlc_\" and are found in your Account settings, not the Admin panel.
                 </p>
               </div>
             </div>
