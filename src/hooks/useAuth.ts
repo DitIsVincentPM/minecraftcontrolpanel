@@ -43,7 +43,7 @@ export const useAuth = (): AuthContextType => {
       if (storedAuth === 'true' && storedUser) {
         try {
           const userData = JSON.parse(storedUser);
-          if (userData.apiKey) {
+          if (userData.apiKey && userData.apiKey !== 'demo-admin-key') {
             const validation = await pterodactylAuthApi.validateApiKey(userData.apiKey);
             if (!validation.valid) {
               // API key is invalid, clear auth
@@ -65,25 +65,6 @@ export const useAuth = (): AuthContextType => {
     setError(null);
     
     try {
-      // Check for demo admin credentials
-      if (email === 'admin' && password === 'admin') {
-        const adminUser: User = {
-          id: 0,
-          email: 'admin@minecraftcp.com',
-          name: 'Administrator',
-          username: 'admin',
-          isAdmin: true,
-          apiKey: 'demo-admin-key'
-        };
-        
-        setIsAuthenticated(true);
-        setUser(adminUser);
-        localStorage.setItem('auth', 'true');
-        localStorage.setItem('user', JSON.stringify(adminUser));
-        return true;
-      }
-
-      // Authenticate with Pterodactyl Panel
       const authResponse: AuthResponse = await pterodactylAuthApi.authenticateUser(email, password);
       
       if (authResponse.success && authResponse.user && authResponse.apiKey) {
@@ -194,7 +175,7 @@ export const useAuth = (): AuthContextType => {
         
         return true;
       } else {
-        setError('Invalid API key');
+        setError('Invalid API key. Please check your Client API key from your Pterodactyl Panel.');
         return false;
       }
     } catch (err) {
@@ -217,7 +198,6 @@ export const useAuth = (): AuthContextType => {
   // Helper function to update API token in pterodactyl service
   const updateApiToken = (token: string) => {
     // This would update the token in the pterodactyl API service
-    // We'll need to modify the pterodactyl API service to accept dynamic tokens
     if (window.pterodactylApi) {
       window.pterodactylApi.updateToken(token);
     }

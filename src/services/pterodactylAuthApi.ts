@@ -41,11 +41,11 @@ class PterodactylAuthService {
     this.applicationToken = PANEL_APPLICATION_TOKEN;
   }
 
-  private async applicationRequest(endpoint: string, options: RequestInit = {}) {
-    const url = `${this.baseUrl}/api/application${endpoint}`;
+  private async clientRequest(endpoint: string, token: string, options: RequestInit = {}) {
+    const url = `${this.baseUrl}/api/client${endpoint}`;
     
     const headers = {
-      'Authorization': `Bearer ${this.applicationToken}`,
+      'Authorization': `Bearer ${token}`,
       'Content-Type': 'application/json',
       'Accept': 'application/vnd.pterodactyl.v1+json',
       ...options.headers,
@@ -59,21 +59,7 @@ class PterodactylAuthService {
       });
 
       if (!response.ok) {
-        if (response.status === 401) {
-          throw new Error('Invalid application API token');
-        }
-        if (response.status === 403) {
-          throw new Error('Insufficient permissions');
-        }
-        if (response.status === 404) {
-          throw new Error('User not found');
-        }
-        if (response.status === 405) {
-          throw new Error('CORS configuration issue');
-        }
-        
-        const errorText = await response.text();
-        throw new Error(`API error: ${response.status} ${response.statusText}`);
+        throw new Error(`Client API error: ${response.status}`);
       }
 
       return await response.json();
@@ -85,170 +71,38 @@ class PterodactylAuthService {
     }
   }
 
-  private async clientRequest(endpoint: string, token: string, options: RequestInit = {}) {
-    const url = `${this.baseUrl}/api/client${endpoint}`;
-    
-    const headers = {
-      'Authorization': `Bearer ${token}`,
-      'Content-Type': 'application/json',
-      'Accept': 'application/vnd.pterodactyl.v1+json',
-      ...options.headers,
-    };
-
-    const response = await fetch(url, {
-      ...options,
-      headers,
-      mode: 'cors',
-    });
-
-    if (!response.ok) {
-      throw new Error(`Client API error: ${response.status}`);
-    }
-
-    return await response.json();
-  }
-
-  // Find user by email
-  async findUserByEmail(email: string): Promise<PanelUser | null> {
-    try {
-      const response = await this.applicationRequest(`/users?filter[email]=${encodeURIComponent(email)}`);
-      
-      if (response.data && response.data.length > 0) {
-        return response.data[0].attributes;
-      }
-      
-      return null;
-    } catch (error) {
-      console.error('Failed to find user:', error);
-      return null;
-    }
-  }
-
-  // Create a new user on the panel
-  async createUser(email: string, password: string, firstName: string, lastName: string): Promise<PanelUser> {
-    const username = email.split('@')[0].toLowerCase().replace(/[^a-z0-9]/g, '');
-    
-    const userData = {
-      email,
-      username,
-      first_name: firstName,
-      last_name: lastName,
-      password,
-      root_admin: false,
-      language: 'en'
-    };
-
-    try {
-      const response = await this.applicationRequest('/users', {
-        method: 'POST',
-        body: JSON.stringify(userData),
-      });
-
-      return response.attributes;
-    } catch (error) {
-      throw new Error(`Failed to create user: ${error instanceof Error ? error.message : 'Unknown error'}`);
-    }
-  }
-
-  // Generate a client API key for the user
-  async generateClientApiKey(userId: number, description: string = 'MinecraftCP Frontend'): Promise<string> {
-    try {
-      // First, try to get existing API keys to avoid duplicates
-      const existingKeys = await this.getUserApiKeys(userId);
-      const existingKey = existingKeys.find(key => key.description === description);
-      
-      if (existingKey) {
-        // Return the existing key identifier (this is the actual API key)
-        return existingKey.identifier;
-      }
-
-      // Create new API key using the application API
-      // Note: This is a workaround since we can't directly create client API keys via application API
-      // In a real implementation, you might need to use a different approach or have the user create their own key
-      
-      // For now, we'll create a temporary solution where we store a mapping
-      // In production, you'd want to implement proper API key generation
-      const tempApiKey = `ptlc_${userId}_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-      
-      // Store this mapping in your backend/database
-      // For demo purposes, we'll use localStorage
-      const apiKeyMapping = {
-        userId,
-        apiKey: tempApiKey,
-        description,
-        created_at: new Date().toISOString()
-      };
-      
-      localStorage.setItem(`api_key_${userId}`, JSON.stringify(apiKeyMapping));
-      
-      return tempApiKey;
-    } catch (error) {
-      throw new Error(`Failed to generate API key: ${error instanceof Error ? error.message : 'Unknown error'}`);
-    }
-  }
-
-  // Get user's API keys (this would need to be implemented differently in production)
-  async getUserApiKeys(userId: number): Promise<ApiKey[]> {
-    try {
-      // In production, this would query the panel's database or use a proper API endpoint
-      // For demo purposes, check localStorage
-      const storedKey = localStorage.getItem(`api_key_${userId}`);
-      if (storedKey) {
-        const keyData = JSON.parse(storedKey);
-        return [{
-          identifier: keyData.apiKey,
-          description: keyData.description,
-          allowed_ips: [],
-          last_used_at: null,
-          created_at: keyData.created_at
-        }];
-      }
-      return [];
-    } catch (error) {
-      return [];
-    }
-  }
-
-  // Authenticate user with email/password and return user data + API key
+  // Simplified authentication - just validate the API key directly
   async authenticateUser(email: string, password: string): Promise<AuthResponse> {
     try {
-      // Step 1: Find user by email
-      let user = await this.findUserByEmail(email);
-      
-      if (!user) {
+      // For demo purposes, accept admin/admin
+      if (email === 'admin' && password === 'admin') {
         return {
-          user: null as any,
-          apiKey: '',
-          success: false,
-          message: 'User not found. Please check your email address.'
+          user: {
+            id: 0,
+            external_id: null,
+            uuid: 'demo-uuid',
+            username: 'admin',
+            email: 'admin@minecraftcp.com',
+            first_name: 'Administrator',
+            last_name: 'User',
+            language: 'en',
+            root_admin: true,
+            '2fa': false,
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString()
+          },
+          apiKey: 'demo-admin-key',
+          success: true
         };
       }
 
-      // Step 2: Verify password (in production, this would be done securely)
-      // For demo purposes, we'll accept any password for existing users
-      // In production, you'd need to implement proper password verification
-      
-      // Step 3: Generate or get existing client API key
-      const apiKey = await this.generateClientApiKey(user.id);
-      
-      // Step 4: Test the API key by making a client request
-      try {
-        await this.clientRequest('/account', apiKey);
-      } catch (error) {
-        // If the generated key doesn't work, it means we need a real client API key
-        // In this case, we'll provide instructions to the user
-        return {
-          user,
-          apiKey: '',
-          success: false,
-          message: 'Please create a Client API key in your Pterodactyl Panel and enter it manually.'
-        };
-      }
-
+      // For real authentication, we need the user to provide their Client API key
+      // since we can't reliably authenticate with email/password through the API
       return {
-        user,
-        apiKey,
-        success: true
+        user: null as any,
+        apiKey: '',
+        success: false,
+        message: 'Please use the API Key login option with your Pterodactyl Client API key.'
       };
     } catch (error) {
       return {
@@ -260,42 +114,17 @@ class PterodactylAuthService {
     }
   }
 
-  // Register a new user
+  // Simplified registration - direct users to use API key
   async registerUser(email: string, password: string, firstName: string, lastName: string): Promise<AuthResponse> {
-    try {
-      // Step 1: Check if user already exists
-      const existingUser = await this.findUserByEmail(email);
-      if (existingUser) {
-        return {
-          user: null as any,
-          apiKey: '',
-          success: false,
-          message: 'User already exists with this email address'
-        };
-      }
-
-      // Step 2: Create new user
-      const user = await this.createUser(email, password, firstName, lastName);
-
-      // Step 3: Generate client API key
-      const apiKey = await this.generateClientApiKey(user.id);
-
-      return {
-        user,
-        apiKey,
-        success: true
-      };
-    } catch (error) {
-      return {
-        user: null as any,
-        apiKey: '',
-        success: false,
-        message: error instanceof Error ? error.message : 'Registration failed'
-      };
-    }
+    return {
+      user: null as any,
+      apiKey: '',
+      success: false,
+      message: 'Registration is not available. Please use your existing Pterodactyl account and Client API key.'
+    };
   }
 
-  // Validate an existing API key
+  // Validate an existing API key by testing it against the client API
   async validateApiKey(apiKey: string): Promise<{ valid: boolean; user?: any }> {
     try {
       const response = await this.clientRequest('/account', apiKey);
@@ -304,6 +133,7 @@ class PterodactylAuthService {
         user: response.attributes
       };
     } catch (error) {
+      console.error('API key validation failed:', error);
       return {
         valid: false
       };

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Server, Eye, EyeOff, Github, Mail, Key, AlertCircle, CheckCircle } from 'lucide-react';
+import { Server, Eye, EyeOff, Key, AlertCircle, CheckCircle, ExternalLink } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
 
 export const AuthPage: React.FC = () => {
@@ -62,7 +62,7 @@ export const AuthPage: React.FC = () => {
           <p className="mt-2 text-gray-600">
             {showApiKeyLogin 
               ? 'Enter your Pterodactyl Client API key' 
-              : (isLogin ? 'Sign in to your Pterodactyl account' : 'Get started with your Pterodactyl server')
+              : (isLogin ? 'Sign in to your account' : 'Get started with MinecraftCP')
             }
           </p>
         </div>
@@ -86,7 +86,7 @@ export const AuthPage: React.FC = () => {
               <div>
                 <h4 className="text-sm font-medium text-blue-900">Demo Access</h4>
                 <p className="text-blue-700 text-sm mt-1">
-                  Use <strong>admin</strong> / <strong>admin</strong> for demo access, or enter your Pterodactyl Panel credentials.
+                  Use <strong>admin</strong> / <strong>admin</strong> for demo access, or use the API Key option with your Pterodactyl Client API key.
                 </p>
               </div>
             </div>
@@ -96,7 +96,7 @@ export const AuthPage: React.FC = () => {
             {showApiKeyLogin ? (
               /* API Key Login Form */
               <div>
-                <label htmlFor="apiKey\" className="block text-sm font-medium text-gray-700">
+                <label htmlFor="apiKey" className="block text-sm font-medium text-gray-700">
                   Client API Key
                 </label>
                 <div className="mt-1 relative">
@@ -123,7 +123,7 @@ export const AuthPage: React.FC = () => {
               <>
                 {!isLogin && (
                   <div>
-                    <label htmlFor="name\" className="block text-sm font-medium text-gray-700">
+                    <label htmlFor="name" className="block text-sm font-medium text-gray-700">
                       Full Name
                     </label>
                     <input
@@ -211,9 +211,6 @@ export const AuthPage: React.FC = () => {
                         Remember me
                       </label>
                     </div>
-                    <button type="button" className="text-sm text-green-600 hover:text-green-500">
-                      Forgot password?
-                    </button>
                   </div>
                 )}
               </>
@@ -269,14 +266,21 @@ export const AuthPage: React.FC = () => {
           {/* API Key Instructions */}
           {showApiKeyLogin && (
             <div className="mt-6 bg-gray-50 border border-gray-200 rounded-lg p-4">
-              <h4 className="text-sm font-medium text-gray-900 mb-2">How to get your API Key:</h4>
+              <h4 className="text-sm font-medium text-gray-900 mb-2">How to get your Client API Key:</h4>
               <ol className="text-sm text-gray-600 space-y-1 list-decimal list-inside">
                 <li>Log into your Pterodactyl Panel</li>
                 <li>Go to Account → API Credentials</li>
                 <li>Click "Create API Key"</li>
+                <li>Give it a description (e.g., "MinecraftCP")</li>
                 <li>Copy the key (starts with "ptlc_")</li>
                 <li>Paste it above</li>
               </ol>
+              <div className="mt-3 p-3 bg-yellow-50 border border-yellow-200 rounded-md">
+                <p className="text-sm text-yellow-800">
+                  <strong>Important:</strong> Make sure to create a <strong>Client API Key</strong>, not an Application API Key. 
+                  Client keys start with "ptlc_" and are found in your Account settings, not the Admin panel.
+                </p>
+              </div>
             </div>
           )}
         </div>
